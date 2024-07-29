@@ -1,4 +1,4 @@
 package com.demo.googleanalyticsuahtousd.domain;
 
-public record GoogleAnalyticsEvent(String name, EventParam params) {
+public record GoogleAnalyticsEvent(String name, ExchangeRateValueEventParam params) {
 }

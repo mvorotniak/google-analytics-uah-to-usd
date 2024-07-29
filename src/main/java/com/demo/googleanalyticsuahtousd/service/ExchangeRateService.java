@@ -1,6 +1,6 @@
 package com.demo.googleanalyticsuahtousd.service;
 
-import com.demo.googleanalyticsuahtousd.domain.EventParam;
+import com.demo.googleanalyticsuahtousd.domain.ExchangeRateValueEventParam;
 import com.demo.googleanalyticsuahtousd.domain.GoogleAnalyticsEvent;
 import com.demo.googleanalyticsuahtousd.domain.GoogleAnalyticsEvents;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,7 +45,7 @@ public class ExchangeRateService {
     private final ObjectMapper objectMapper;
 
     @SneakyThrows
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
     public void sendUahToUsdGoogleAnalyticsEvent() {
         HttpUrl httpUrl = new HttpUrl.Builder()
                 .scheme("https")
@@ -56,9 +56,7 @@ public class ExchangeRateService {
                 .addQueryParameter("api_secret", googleApiSecret)
                 .build();
 
-        BigDecimal uahToUsd = this.getUahToUsdExchangeRate();
-        GoogleAnalyticsEvents events = new GoogleAnalyticsEvents(UUID.randomUUID().toString(),
-                List.of(new GoogleAnalyticsEvent(googleEvent, new EventParam(uahToUsd))));
+        GoogleAnalyticsEvents events = createUahToUsdGoogleAnalyticsEvent();
         String json = objectMapper.writeValueAsString(events);
 
         RequestBody requestBody = RequestBody.create(json, MediaType.get("application/json; charset=utf-8"));
@@ -73,6 +71,17 @@ public class ExchangeRateService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Unexpected issue occurred calling google-analytics: ", e);
         }
+    }
+    
+    private GoogleAnalyticsEvents createUahToUsdGoogleAnalyticsEvent() {
+        String userId = UUID.randomUUID().toString();
+        
+        BigDecimal uahToUsd = this.getUahToUsdExchangeRate();
+        ExchangeRateValueEventParam param = new ExchangeRateValueEventParam(uahToUsd);
+        
+        GoogleAnalyticsEvent event = new GoogleAnalyticsEvent(googleEvent, param);
+        
+        return new GoogleAnalyticsEvents(userId, List.of(event));
     }
 
     public BigDecimal getUahToUsdExchangeRate() {
